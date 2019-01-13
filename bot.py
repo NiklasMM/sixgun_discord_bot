@@ -3,8 +3,11 @@ import feedparser
 import discord
 import sys
 import logging
+import random
 from discord import Game
 from tinydb import TinyDB, Query
+from helpers import quotes
+
 try:
     from config import CONFIG
 except ModuleNotFoundError:
@@ -84,4 +87,16 @@ if __name__ == "__main__":
     )
     for watcher in CONFIG["feed_watchers"]:
         client.loop.create_task(watch_feed(watcher))
+
+    @client.event
+    async def on_message(message):
+        """
+            Reply with a random quote if mentioned in a message.
+        """
+        for member in message.mentions:
+            if member.id == CONFIG["bot_user_id"]:
+                reply = "+++ {0} +++".format(random.choice(quotes).upper())
+                await client.send_message(message.channel, reply)
+                break
+
     client.run(CONFIG["TOKEN"])

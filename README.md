@@ -1,10 +1,11 @@
 # Sixgun Discord Bot
 
-This is a discord bot for the Podcast Network Sigun.org
+This is a discord bot for the Podcast Network Sixgun.org
 
 Current features:
 
 * Watches feeds for podcasts and posts messages for new episodes in the shows channel.
+* Replies with random servitor quote if mentioned.
 
 
 To run add a config file `config.py`, which looks like this:
@@ -14,6 +15,7 @@ from helpers import FeedWatcher
 
 CONFIG = {
     "TOKEN": "<the bot's access token>",
+    "bot_user_id": "<the id of the bot user>",
     "feed_watchers": [
         FeedWatcher(
             "<Channel ID>", "<Feed URL>", "<Show name>"
