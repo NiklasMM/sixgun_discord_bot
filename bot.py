@@ -2,11 +2,13 @@ import asyncio
 import feedparser
 import discord
 import sys
+import re
 import logging
 import random
-from discord import Game
+import datetime
+import textwrap
 from tinydb import TinyDB, Query
-from helpers import quotes
+from helpers import quotes, date_to_imperial_date
 
 try:
     from config import CONFIG
@@ -17,6 +19,61 @@ except ModuleNotFoundError:
 client = discord.Client()
 
 db = TinyDB(CONFIG["db_path"])
+
+
+async def say_date(channel):
+    """ Says the current imperial date """
+    date = date_to_imperial_date(datetime.datetime.now())
+    quote = random.choice(
+        (
+            "ERROR INTRODUCED BY I̝͆ͮͅMͣ̍̽MA̳͚̦ͫ̆͒T̳͕̻͑̿ͨER͖̝̙ͧ̃ͨI̗̟U̹̓M̹̤̝̉̈̊ IS WITHIN SPECIFICATIONS",
+            "A GOOD TIME TO DIE?",
+            "LIKE ALL IT IS BLESSED BY THE GOLDEN THRONE",
+            "WHEN DOES IT END?",
+            "TIME IS SLIPPING AWAY",
+        )
+    )
+    await client.send_message(
+        channel, f"+++ THE CURRENT DATE IS `{date}` +++ {quote} +++"
+    )
+
+
+async def unknown_command(channel):
+    quote = random.choice(
+        (
+            "My memory banks are too slow.... I do not understand.",
+            "What is your desire, most beneficent one?",
+            "I can't comply.... Do you consider me useless?",
+            "What is he meaning of this?",
+            "repeat input, lord",
+        )
+    )
+    await client.send_message(
+        channel, "+++ {quote} +++ TRY `!help` +++".format(quote=quote.upper())
+    )
+
+
+async def say_quote(channel):
+    message = "+++ {0} +++".format(random.choice(quotes).upper())
+    await client.send_message(channel, message)
+
+
+async def help_message(channel):
+    """
+        Says a message listing all the available commands.
+    """
+    message = textwrap.dedent(
+        """
+            +++ MY SERVICES ARE AT YOUR DISPOSAL +++
+
+            * `!help` for this help message.
+            * `!date` for the current imperial date.
+            * `!quote` for a random message.
+
+            Go to <https://github.com/NiklasMM/sixgun_discord_bot> for feature requests and bug reports.
+        """
+    )
+    await client.send_message(channel, message)
 
 
 def episode_is_new(feed_url, episode_url):
@@ -81,6 +138,8 @@ async def watch_feed(feedwatcher):
         await asyncio.sleep(CONFIG["feed_watch_interval"])
 
 
+commands = {"date": say_date, "quote": say_quote, "help": help_message}
+
 if __name__ == "__main__":
     logging.basicConfig(
         format="%(asctime)s - %(levelname)s - %(message)s", level=logging.INFO
@@ -95,8 +154,12 @@ if __name__ == "__main__":
         """
         for member in message.mentions:
             if member.id == CONFIG["bot_user_id"]:
-                reply = "+++ {0} +++".format(random.choice(quotes).upper())
-                await client.send_message(message.channel, reply)
+                m = re.search(r"!(?P<command>\S+)", message.content)
+                if m and m.group("command") in commands:
+                    command = commands[m.group("command")]
+                else:
+                    command = unknown_command
+                await command(message.channel)
                 break
 
     client.run(CONFIG["TOKEN"])
