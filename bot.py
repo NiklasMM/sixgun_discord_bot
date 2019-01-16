@@ -126,14 +126,17 @@ async def watch_feed(feedwatcher):
                 break
 
         if episode_is_new(feedwatcher.feed_url, episode_url):
-
-            message = "+++ I RECEIVED A NEW {1} DATAFRAME +++ \n {0}".format(
-                episode_url, feedwatcher.show_name
-            )
-            await client.send_message(channel, message)
-            logger.info(
-                "Sent message for new episode for {0}".format(feedwatcher.show_name)
-            )
+            # If a filter is defined, the title of the episode must contain the filter or else it's ignored
+            if feedwatcher.filter and feedwatcher.filter not in latest_episode["title"]:
+                logger.info("Episode '{}' does not match filter.".format(latest_episode["title"]))
+            else:
+                message = "+++ I RECEIVED A NEW {1} DATAFRAME +++ \n {0}".format(
+                    episode_url, feedwatcher.show_name
+                )
+                await client.send_message(channel, message)
+                logger.info(
+                    "Sent message for new episode for {0}".format(feedwatcher.show_name)
+                )
         else:
             logger.info("No new episode for {0}".format(feedwatcher.show_name))
         await asyncio.sleep(CONFIG["feed_watch_interval"])
