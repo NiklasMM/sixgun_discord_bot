@@ -23,6 +23,7 @@ CONFIG = {
     ],
     "feed_watch_interval": "<intervall for watchers in seconds>",
     "db_path": "<Path to the bot's DB file, eg. /tmp/bot.db>",
+    "log_path": "<Path to a directory, where log files will be placed.>"
 }
 
 ```

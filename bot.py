@@ -3,7 +3,8 @@ import feedparser
 import discord
 import sys
 import re
-import logging
+import os
+from loguru import logger
 import random
 import datetime
 import textwrap
@@ -89,7 +90,7 @@ def episode_is_new(feed_url, episode_url):
 
     if len(result) == 0:
         db.insert({"feed_url": feed_url, "episode_url": episode_url})
-        logging.info("This is the first episode for this feed. Assuming it's not new.")
+        logger.info("This is the first episode for this feed. Assuming it's not new.")
         return False
     else:
         known_episode = result[0]
@@ -130,20 +131,26 @@ async def watch_feed(feedwatcher):
                 episode_url, feedwatcher.show_name
             )
             await client.send_message(channel, message)
-            logging.info(
+            logger.info(
                 "Sent message for new episode for {0}".format(feedwatcher.show_name)
             )
         else:
-            logging.info("No new episode for {0}".format(feedwatcher.show_name))
+            logger.info("No new episode for {0}".format(feedwatcher.show_name))
         await asyncio.sleep(CONFIG["feed_watch_interval"])
 
 
 commands = {"date": say_date, "quote": say_quote, "help": help_message}
 
 if __name__ == "__main__":
-    logging.basicConfig(
-        format="%(asctime)s - %(levelname)s - %(message)s", level=logging.INFO
+
+    logger.add(
+        os.path.join(CONFIG.get("log_dir", "/tmp"), "servitor.log"),
+        format="{time} {level} {message}",
+        level="INFO",
+        rotation="03:00",
+        retention="60 days",
     )
+
     for watcher in CONFIG["feed_watchers"]:
         client.loop.create_task(watch_feed(watcher))
 

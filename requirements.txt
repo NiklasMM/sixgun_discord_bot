@@ -1,3 +1,4 @@
 discord
 feedparser
 tinydb
+loguru
