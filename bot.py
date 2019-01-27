@@ -128,7 +128,11 @@ async def watch_feed(feedwatcher):
         if episode_is_new(feedwatcher.feed_url, episode_url):
             # If a filter is defined, the title of the episode must contain the filter or else it's ignored
             if feedwatcher.filter and feedwatcher.filter not in latest_episode["title"]:
-                logger.info("Episode '{}' does not match filter.".format(latest_episode["title"]))
+                logger.info(
+                    "Episode '{}' does not match filter.".format(
+                        latest_episode["title"]
+                    )
+                )
             else:
                 message = "+++ I RECEIVED A NEW {1} DATAFRAME +++ \n {0}".format(
                     episode_url, feedwatcher.show_name
