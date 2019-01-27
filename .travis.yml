@@ -1,0 +1,16 @@
+language: python
+python:
+  - "3.6"
+before_install:
+  - "pip install -U pip"
+# command to install dependencies
+install:
+  - "pip install -U -r requirements.txt"
+  - "pip install -U -r test_requirements.txt"
+# command to run tests
+script:
+ - black --check *.py
+ - pytest tests.py
+
+notifications:
+  email: false

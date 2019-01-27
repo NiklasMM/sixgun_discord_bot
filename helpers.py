@@ -3,13 +3,14 @@ from datetime import date
 import calendar
 import math
 
-class FeedWatcher:
 
+class FeedWatcher:
     def __init__(self, channel_id, feed_url, show_name, filter=None):
         self.channel_id = channel_id
         self.feed_url = feed_url
         self.show_name = show_name
         self.filter = filter
+
 
 # Some random quotes a Warhammer 40k servitor would say.
 # See http://wh40k-de.lexicanum.com/wiki/Servitor
