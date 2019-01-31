@@ -1,4 +1,5 @@
 import asyncio
+import argparse
 import feedparser
 import discord
 import sys
@@ -17,9 +18,8 @@ except ModuleNotFoundError:
     print("Could not find config.py")
     sys.exit(1)
 
-client = discord.Client()
-
 db = TinyDB(CONFIG["db_path"])
+client = None
 
 
 async def say_date(channel):
@@ -86,19 +86,15 @@ def episode_is_new(feed_url, episode_url):
         If we have never seen any episode for this feed we assuem it's not new either.
     """
     Entry = Query()
-    result = db.search(Entry.feed_url == feed_url)
+    result = db.search(
+        (Entry.feed_url == feed_url) & (Entry.episode_url == episode_url)
+    )
 
     if len(result) == 0:
         db.insert({"feed_url": feed_url, "episode_url": episode_url})
-        logger.info("This is the first episode for this feed. Assuming it's not new.")
-        return False
+        return True
     else:
-        known_episode = result[0]
-        if known_episode["episode_url"] == episode_url:
-            return False
-        else:
-            db.update({"episode_url": episode_url}, Entry.feed_url == feed_url)
-            return True
+        return False
 
 
 def get_latest_episode(url):
@@ -107,6 +103,20 @@ def get_latest_episode(url):
     """
     feed = feedparser.parse(url)
     return feed.entries[0]
+
+
+def fill_db_with_feed_entries(feed_url, db):
+    """
+        Fills the passed db with entries for all entries in the feed found at feed_url
+    """
+    feed = feedparser.parse(feed_url)
+
+    for entry in feed.entries:
+        for link in entry.links:
+            if link["rel"] == "alternate":
+                episode_url = link["href"]
+                break
+        db.insert({"feed_url": feed_url, "episode_url": episode_url})
 
 
 async def watch_feed(feedwatcher):
@@ -158,22 +168,34 @@ if __name__ == "__main__":
         retention="60 days",
     )
 
-    for watcher in CONFIG["feed_watchers"]:
-        client.loop.create_task(watch_feed(watcher))
+    parser = argparse.ArgumentParser(description="A loyal servant of the emperor")
+    parser.add_argument("--fill-db", action="store_true")
+    args = parser.parse_args()
 
-    @client.event
-    async def on_message(message):
-        """
-            Reply with a random quote if mentioned in a message.
-        """
-        for member in message.mentions:
-            if member.id == CONFIG["bot_user_id"]:
-                m = re.search(r"!(?P<command>\S+)", message.content)
-                if m and m.group("command") in commands:
-                    command = commands[m.group("command")]
-                else:
-                    command = unknown_command
-                await command(message.channel)
-                break
+    if args.fill_db:
+        for watcher in CONFIG["feed_watchers"]:
+            fill_db_with_feed_entries(watcher.feed_url, db)
+            logger.info(f"Initialized DB with entries for {watcher.show_name}")
+        sys.exit(0)
 
-    client.run(CONFIG["TOKEN"])
+    else:
+        client = discord.Client()
+        for watcher in CONFIG["feed_watchers"]:
+            client.loop.create_task(watch_feed(watcher))
+
+        @client.event
+        async def on_message(message):
+            """
+                Reply with a random quote if mentioned in a message.
+            """
+            for member in message.mentions:
+                if member.id == CONFIG["bot_user_id"]:
+                    m = re.search(r"!(?P<command>\S+)", message.content)
+                    if m and m.group("command") in commands:
+                        command = commands[m.group("command")]
+                    else:
+                        command = unknown_command
+                    await command(message.channel)
+                    break
+
+        client.run(CONFIG["TOKEN"])
