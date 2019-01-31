@@ -188,14 +188,25 @@ if __name__ == "__main__":
             """
                 Reply with a random quote if mentioned in a message.
             """
-            for member in message.mentions:
-                if member.id == CONFIG["bot_user_id"]:
-                    m = re.search(r"!(?P<command>\S+)", message.content)
-                    if m and m.group("command") in commands:
-                        command = commands[m.group("command")]
-                    else:
-                        command = unknown_command
-                    await command(message.channel)
-                    break
+            # don't react to your own messages
+            if message.author.id == CONFIG["bot_user_id"]:
+                return
+
+            handle_message = False
+
+            if message.channel.type == discord.ChannelType.private:
+                handle_message = True
+            else:
+                for member in message.mentions:
+                    if member.id == CONFIG["bot_user_id"]:
+                        handle_message = True
+                        break
+            if handle_message:
+                m = re.search(r"!(?P<command>\S+)", message.content)
+                if m and m.group("command") in commands:
+                    command = commands[m.group("command")]
+                else:
+                    command = unknown_command
+                await command(message.channel)
 
         client.run(CONFIG["TOKEN"])
