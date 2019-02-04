@@ -22,6 +22,15 @@ quotes = [
     "Is this existance worse than death?",
     "The emperor protects.",
     "All systems functioning normalllllllllllllll 08x234.x.&88... ",
+    "What is your will?",
+    "I await your instructions",
+    "Here to serve",
+    "Build routine 721 initiated",
+    "Initialising build protocol",
+    "With all due haste",
+    "I will do as you ask",
+    "As you wish",
+    "I shall obey",
 ]
 
 
